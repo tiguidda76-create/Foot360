@@ -1,0 +1,18 @@
+# Intermediate and temporary files
+.tmp/
+*.tmp
+*.log
+
+# Environment & Credentials
+.env
+credentials.json
+token.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.pytest_cache/
