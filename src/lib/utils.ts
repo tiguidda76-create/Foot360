@@ -8,6 +8,7 @@ export function cn(...inputs: ClassValue[]) {
 export function formatDate(date: string | Date): string {
   const d = typeof date === "string" ? new Date(date) : date;
   return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "UTC",
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -20,6 +21,7 @@ export function formatDate(date: string | Date): string {
 export function formatShortDate(date: string | Date): string {
   const d = typeof date === "string" ? new Date(date) : date;
   return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "UTC",
     day: "numeric",
     month: "short",
   }).format(d);

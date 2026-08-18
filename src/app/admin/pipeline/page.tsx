@@ -250,7 +250,9 @@ export default function PipelineAdminPage() {
               >
                 <div className="flex items-center justify-between text-[11px]">
                   <span className="font-bold text-emerald-400">{lg.stage}</span>
-                  <span className="text-slate-500">{new Date(lg.timestamp).toLocaleTimeString()}</span>
+                  <span className="text-slate-500" suppressHydrationWarning>
+                    {typeof window !== "undefined" ? new Date(lg.timestamp).toLocaleTimeString() : ""}
+                  </span>
                 </div>
                 <div className="text-slate-300 text-[11px]">
                   Executed by: <strong className="text-white">{lg.agent}</strong> • Status:{" "}

@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("🌱 Starting Foot360 European Football Database Seeding...");
+  console.log("🌱 Starting Foot360 European Football Database Seeding with Real-Time Data...");
 
   // 1. Seed Authors (E-E-A-T Accredited)
   const julian = await prisma.author.upsert({
@@ -82,50 +82,66 @@ async function main() {
   }
   console.log("✅ Teams created");
 
-  // 4. Seed Matches
+  // 4. Seed Live Matches with current real-time timestamps
+  const now = new Date();
+  await prisma.match.deleteMany({});
   await prisma.match.createMany({
     data: [
       {
         leagueId: leagues["champions-league"].id,
+        homeTeamId: teams["real-madrid"].id,
+        awayTeamId: teams["man-city"].id,
+        matchDate: new Date(now.getTime() - 1000 * 60 * 45), // 45 mins ago (LIVE)
+        status: "LIVE",
+        minute: 68,
+        homeScore: 2,
+        awayScore: 1,
+        venue: "Santiago Bernabéu, Madrid",
+        statsJson: JSON.stringify({ xG: "1.95 - 1.42", possession: "48% - 52%", shots: "14 - 11" }),
+      },
+      {
+        leagueId: leagues["premier-league"].id,
         homeTeamId: teams["arsenal"].id,
-        awayTeamId: teams["real-madrid"].id,
-        matchDate: new Date(Date.now() - 3600 * 1000 * 24),
+        awayTeamId: teams["liverpool"].id,
+        matchDate: new Date(now.getTime() - 1000 * 60 * 120), // 2 hours ago (FT)
         status: "FT",
-        homeScore: 3,
+        homeScore: 2,
         awayScore: 1,
         venue: "Emirates Stadium, London",
-        statsJson: JSON.stringify({ xG: "2.45 - 0.88", possession: "58% - 42%", shots: "17 - 9", fouls: "11 - 14" }),
+        statsJson: JSON.stringify({ xG: "2.10 - 1.25", possession: "54% - 46%", shots: "16 - 8" }),
       },
       {
         leagueId: leagues["la-liga"].id,
         homeTeamId: teams["barcelona"].id,
         awayTeamId: teams["real-madrid"].id,
-        matchDate: new Date(Date.now() + 3600 * 1000 * 48),
+        matchDate: new Date(now.getTime() + 1000 * 60 * 60 * 24), // Tomorrow
         status: "SCHEDULED",
         homeScore: 0,
         awayScore: 0,
         venue: "Spotify Camp Nou, Barcelona",
-        statsJson: JSON.stringify({ winProbability: "42% - 31% - 27%" }),
-      },
-      {
-        leagueId: leagues["premier-league"].id,
-        homeTeamId: teams["man-city"].id,
-        awayTeamId: teams["liverpool"].id,
-        matchDate: new Date(),
-        status: "LIVE",
-        minute: 74,
-        homeScore: 2,
-        awayScore: 2,
-        venue: "Etihad Stadium, Manchester",
-        statsJson: JSON.stringify({ xG: "1.85 - 1.90", possession: "62% - 38%" }),
+        statsJson: JSON.stringify({ winProbability: "45% - 28% - 27%" }),
       },
     ],
   });
-  console.log("✅ Matches created");
+  console.log("✅ Matches created with real-time live timestamps");
 
-  // 5. Seed Transfer Rumors (Tiered 1-4)
+  // 5. Seed Real-Time Transfer Rumors
+  await prisma.transferRumor.deleteMany({});
   await prisma.transferRumor.createMany({
     data: [
+      {
+        playerName: "Nico Williams",
+        currentClub: "Athletic Bilbao",
+        targetClub: "Arsenal",
+        position: "Left Winger",
+        transferFee: "€75,000,000 (£64M)",
+        rumorTier: 1,
+        confidenceScore: 97,
+        sourceName: "David Ornstein & Fabrizio Romano",
+        summary: "Arsenal trigger €75m release clause. 5-year personal terms verbally agreed. Medical scheduled this week.",
+        leagueId: leagues["premier-league"].id,
+        verifiedAt: new Date(now.getTime() - 1000 * 60 * 18), // 18 mins ago
+      },
       {
         playerName: "Florian Wirtz",
         currentClub: "Bayer Leverkusen",
@@ -134,171 +150,153 @@ async function main() {
         transferFee: "£115M (€135M)",
         rumorTier: 1,
         confidenceScore: 98,
-        sourceName: "David Ornstein & Fabrizio Romano",
-        summary: "Agreement in principle finalized. 5-year contract until June 2031, medical booked in Manchester.",
+        sourceName: "The Athletic Live Desk",
+        summary: "Total agreement in principle reached. Pep Guardiola approved tactical contract through 2031.",
         leagueId: leagues["premier-league"].id,
-      },
-      {
-        playerName: "Alphonso Davies",
-        currentClub: "Bayern Munich",
-        targetClub: "Real Madrid",
-        position: "Left Back",
-        transferFee: "Free Agent / €12M Signing Bonus",
-        rumorTier: 1,
-        confidenceScore: 95,
-        sourceName: "Mario Cortegana (The Athletic)",
-        summary: "Pre-contract agreement verbalized. Joining Los Blancos on a 5-year deal.",
-        leagueId: leagues["la-liga"].id,
+        verifiedAt: new Date(now.getTime() - 1000 * 60 * 42), // 42 mins ago
       },
       {
         playerName: "Joshua Kimmich",
         currentClub: "Bayern Munich",
         targetClub: "FC Barcelona",
         position: "Central Midfielder",
-        transferFee: "Free / €35M Contract Package",
+        transferFee: "Free Agent / €10M Signing Bonus",
         rumorTier: 2,
-        confidenceScore: 84,
+        confidenceScore: 88,
         sourceName: "Florian Plettenberg (Sky Sport DE)",
-        summary: "Direct discussions between Hansi Flick and Kimmich's representatives continuing in Munich.",
+        summary: "Hansi Flick holds direct discussions in Munich regarding spatial midfield role.",
         leagueId: leagues["la-liga"].id,
-      },
-      {
-        playerName: "Theo Hernandez",
-        currentClub: "AC Milan",
-        targetClub: "Bayern Munich",
-        position: "Left Back",
-        transferFee: "€65,000,000",
-        rumorTier: 2,
-        confidenceScore: 78,
-        sourceName: "Gianluca Di Marzio (Sky Italia)",
-        summary: "Bayern exploring Theo as primary successor if left-back departures materialize.",
-        leagueId: leagues["bundesliga"].id,
-      },
-      {
-        playerName: "Viktor Gyökeres",
-        currentClub: "Sporting CP",
-        targetClub: "Arsenal",
-        position: "Striker",
-        transferFee: "€85,000,000 Release Clause",
-        rumorTier: 3,
-        confidenceScore: 68,
-        sourceName: "Record Portugal / The Standard",
-        summary: "Arsenal scouts compiled 6 consecutive in-person dossiers during Liga Portugal matches.",
-        leagueId: leagues["premier-league"].id,
+        verifiedAt: new Date(now.getTime() - 1000 * 60 * 85), // 1h 25m ago
       },
     ],
   });
-  console.log("✅ Transfer Rumors created");
+  console.log("✅ Real-time Transfer Rumors created");
 
-  // 6. Seed In-Depth E-E-A-T Articles
-  await prisma.post.upsert({
-    where: { slug: "arsenal-3-1-real-madrid-tactical-mastery-champions-league" },
-    update: {},
-    create: {
-      title: "Arsenal 3-1 Real Madrid: Arteta's Pressing Trap Dismantles European Royalty at the Emirates",
-      slug: "arsenal-3-1-real-madrid-tactical-mastery-champions-league",
-      excerpt: "Mikel Arteta orchestrated a European tactical masterclass as Arsenal dismantled Real Madrid 3-1 behind suffocating counter-pressing and half-space overloads.",
-      content: `Under the glare of European floodlights, matches of this magnitude are not decided by fortune; they are won in the exacting margins of structural discipline, pressing resistance, and spatial dominance. The 3-1 triumph of **Arsenal** over **Real Madrid** was not simply a statement victory—it was an ideological manifesto executed by Mikel Arteta's meticulously calibrated side.
+  // 6. Seed In-Depth Fresh Real-Time Articles
+  await prisma.post.deleteMany({});
 
-## The Decisive Pressing Trap
-From the opening whistle, Arsenal established territorial hegemony through a high-intensity 4-2-4 pressing structure. Declan Rice and Thomas Partey were instructed to step aggressively onto Real Madrid's interior pivots, preventing Toni Kroos and Eduardo Camavinga from turning to access Vinicius Jr. in transition.
+  await prisma.post.create({
+    data: {
+      title: "Real Madrid 2-1 Man City (68'): Mbappé & Vinicius Counter-Press Overloads Stun Guardiola at the Bernabéu",
+      slug: "real-madrid-man-city-mbappe-vinicius-live-tactical-masterclass",
+      excerpt: "Carlo Ancelotti's Real Madrid have unleashed a suffocating transitional blitz against Manchester City, with Kylian Mbappé and Vinicius Jr tearing through central corridors.",
+      content: `Under the pulsating floodlights of the Santiago Bernabéu, this heavyweight European encounter is delivering an absolute tactical clinic. Real Madrid currently lead Manchester City 2-1 in the 68th minute, orchestrated by an asymmetric pressing structure that has completely neutralized City's build-up phase.
 
-According to telemetry recorded by UEFA Match Centre, Arsenal forced **14 high turnovers within Madrid's defensive third** in the first 45 minutes alone.
+## The Mbappé-Vinicius Transition Trap
+Carlo Ancelotti deployed a fluid 4-3-3 that shifts into a narrow 4-4-2 diamond out of possession. Whenever Rodri receives the ball under pressure, Jude Bellingham and Federico Valverde initiate an aggressive dual-pivot squeeze, forcing turnovers into the inside-left channel where Kylian Mbappé and Vinicius Jr. exploit space behind Kyle Walker.
 
-> "Our spatial occupation between Madrid's midfield line and back four was exceptional. We didn't allow their playmakers time to settle or dictate rhythm."
-> — **Mikel Arteta** (*UEFA Post-Match Press Conference*)
+According to live telemetry from the Bernabéu press desk:
+- **Real Madrid high turnovers**: 9 inside the final third
+- **Transitional sprint speed**: Mbappé clocked at **35.9 km/h** on his opening goal run
+- **Expected Goals (xG)**: Real Madrid 1.95 - 1.42 Manchester City
 
-Bukayo Saka opened the scoring on 18 minutes after an interception by Rice, cutting inside Ferland Mendy and placing a curling left-footed strike into the top corner. Martin Odegaard doubled the lead with a 25-yard drive before Kai Havertz sealed the triumph following a second-half counter-punch from Vinicius Jr.
+> "The spatial occupation between City's midfield line and back four has been the exact key to our direct vertical transitions."
+> — **Carlo Ancelotti** (*Flash Interview*)
 
-## Tactical Breakdown: Positional Asymmetry & The Rice Axis
-The structural divergence between the two sides was profound:
-1. **Inverted Fullback Mechanics**: Jurrien Timber shifted into central midfield during possession phases, creating a 3-2-4-1 overload that overwhelmed Madrid's midfield double-pivot.
-2. **Half-Space Exploitation**: Odegaard and Saka continuously engineered 2v1 overloads against Mendy, isolating Madrid's left flank.
-3. **Rest-Defense Stability**: Gabriel Magalhães and William Saliba maintained a high 44-meter line, compressing the pitch and reducing space for Madrid's transitional runners.
+## Tactical Analysis: Positional Adjustments
+1. **Asymmetric Left-Overload**: Real Madrid are channeling 61% of their attacks through the left half-space, creating 3v2 overloads against Akanji and Dias.
+2. **Rest-Defense Discipline**: Antonio Rüdiger has suffocated Erling Haaland, denying the Norwegian striker central service.
+3. **Midfield Compactness**: Camavinga's defensive recoveries (7 tackles won) have thwarted City's customary sustained possession.
 
-## Statistical Dominance & Analytical Depth
-The underlying metrics confirm the comprehensive nature of the performance:
-- **Expected Goals (xG)**: Arsenal 2.45 - 0.88 Real Madrid
-- **Field Tilt**: Arsenal 64% in the opening hour
-- **Pressing Efficiency**: 6.2 Passes Per Defensive Action (PPDA) for Arsenal
-
-For Carlo Ancelotti's Real Madrid, the loss exposes structural vulnerabilities in central midfield defensive transitions when facing elite pressing sides. For Arsenal, it confirms their evolution from domestic contenders to formidable European heavyweights.`,
+With 20 minutes remaining, Pep Guardiola is preparing tactical adjustments from the bench as City look to unlock Madrid's deep defensive block.`,
       coverImage: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1200&q=80",
       category: "MATCH_REPORT",
       leagueId: leagues["champions-league"].id,
       authorId: julian.id,
-      tacticalAnalysis: "Arsenal employed a compact 3-2-4-1 in-possession shape with Timber inverting alongside Partey. The key pressing trigger was triggered whenever Madrid's center-backs played backwards to Courtois.",
-      statsBreakdown: JSON.stringify({ xG: "2.45 - 0.88", possession: "58% - 42%", shots: "17 - 9", ppda: "6.2 - 14.1" }),
+      tacticalAnalysis: "Madrid's 4-3-3 asymmetric overload in the left half-space isolates City's right center-back in 1v1 situations with Mbappé.",
+      statsBreakdown: JSON.stringify({ xG: "1.95 - 1.42", possession: "48% - 52%", shots: "14 - 11", ppda: "7.4 - 9.8" }),
       sources: JSON.stringify([
-        { name: "UEFA Official Match Center", tier: 1, url: "https://uefa.com" },
-        { name: "The Athletic (Amy Lawrence)", tier: 1, quote: "Arteta's tactical blueprint stifled Madrid's transition game completely." },
-        { name: "Mikel Arteta Post-Match", tier: 1, speaker: "Mikel Arteta", quote: "Our spatial occupation between Madrid's midfield line and back four was exceptional." }
+        { name: "UEFA Live Telemetry Desk", tier: 1, url: "https://uefa.com" },
+        { name: "The Athletic Live (Mario Cortegana)", tier: 1, quote: "Ancelotti's transitional blueprint is completely exposing City's rest-defense." }
       ]),
       rumorTier: null,
-      seoTitle: "Arsenal 3-1 Real Madrid: Tactical Analysis & Pressing Masterclass | Foot360",
-      seoDescription: "In-depth tactical report and xG breakdown of Arsenal's 3-1 Champions League victory over Real Madrid at the Emirates Stadium.",
-      keywords: "Arsenal, Real Madrid, UEFA Champions League, Mikel Arteta, Tactical Analysis, xG, London, Madrid",
+      seoTitle: "Real Madrid vs Man City: Live Champions League Tactical Breakdown & xG | Foot360",
+      seoDescription: "Live tactical report and statistical breakdown of Real Madrid vs Manchester City at the Santiago Bernabéu.",
+      keywords: "Real Madrid, Manchester City, Champions League, Mbappe, Vinicius, Guardiola, Ancelotti, Tactical Analysis, xG",
       schemaJson: "{}",
       isCompliant: true,
-      complianceScore: 98,
+      complianceScore: 100,
       featured: true,
-      views: 1420,
+      views: 3120,
+      publishedAt: new Date(now.getTime() - 1000 * 60 * 22), // 22 minutes ago
     },
   });
 
-  await prisma.post.upsert({
-    where: { slug: "florian-wirtz-manchester-city-transfer-tactical-fit" },
-    update: {},
-    create: {
-      title: "Florian Wirtz to Manchester City: £115M Agreement & Tactical Blueprint Decoded",
-      slug: "florian-wirtz-manchester-city-transfer-tactical-fit",
-      excerpt: "Manchester City have agreed a landmark £115m package for Florian Wirtz. We decode Pep Guardiola's tactical blueprint for the German playmaker.",
-      content: `When elite European clubs maneuver in the modern transfer market, value is no longer measured solely in currency, but in positional mastery and tactical adaptability. The definitive agreement sending **Florian Wirtz** from **Bayer Leverkusen** to **Manchester City** in a package valued at **£115,000,000 (€135M)** marks a seismic shift in the European football hierarchy.
+  await prisma.post.create({
+    data: {
+      title: "Arsenal Confirm €75M Agreement for Nico Williams: Arteta's Left-Wing Solution Analyzed",
+      slug: "arsenal-confirm-nico-williams-transfer-tactical-breakdown",
+      excerpt: "Arsenal have finalized a landmark €75m deal for Athletic Bilbao winger Nico Williams. We analyze how the Euro 2024 hero completes Mikel Arteta's attacking puzzle.",
+      content: `In a decisive development across the European transfer wire, **Arsenal** have reached total agreement to trigger the **€75,000,000 (£64M)** release clause for Athletic Bilbao and Spain winger **Nico Williams**.
 
-## The Blueprint Behind the Move
-The pursuit of Wirtz by Manchester City has been meticulous. Identified as the premier archetype for modern transitional and positional play, the 22-year-old German international brings a rare combination of line-breaking progression, spatial intelligence in the half-spaces, and elite pressing output.
+## The Transfer Blueprint
+Authenticated by senior correspondents **David Ornstein (The Athletic)** and **Fabrizio Romano**, Williams has committed to a five-year contract in North London after Mikel Arteta personally presented the tactical blueprint for his role.
 
-According to reporting authenticated by **David Ornstein (The Athletic)** and **Fabrizio Romano**, contractual terms have been formalized on a five-year commitment with medical examinations scheduled in Manchester.
-
-> "Manchester City have agreed a deal in principle to sign Florian Wirtz from Bayer Leverkusen. Total package worth up to £115m. Five-year contract prepared."
+> "Arsenal are advancing with the formal paperwork after triggering the full release clause. Contract 100% agreed until June 2031."
 > — **David Ornstein** (*The Athletic Wire*)
 
-## Tactical Architecture & Positional Fit
-In Pep Guardiola's tactical configuration, Wirtz is projected to operate as an advanced free interior in the dual 'number 8/10' roles:
-- **Spatial Manipulation**: Drawing opposition double-pivots out of position through deceptive body orientation and half-turn receiving.
-- **Transitional Speed**: Accelerating vertical attacks within 3.2 seconds of turnover recovery, feeding Erling Haaland's blind-side runs.
-- **Defensive Work-Rate**: Clocking over 19 high-intensity pressures per 90 minutes under Xabi Alonso at Leverkusen.
-
-## Statistical Profile (99th Percentile)
-Over the preceding 12 months, Wirtz registered:
-- **8.4 Progressive Passes per 90** (99th percentile across Europe's top five leagues)
-- **3.1 Shot-Creating Actions per 90**
-- **Expected Assists (xA) of 0.38 per match**
-
-For Bayer Leverkusen, the substantial capital injection provides foundational flexibility for a comprehensive squad reinvestment. For Manchester City, it represents the acquisition of the premier creative engine in world football.`,
-      coverImage: "https://images.unsplash.com/photo-1560272564-c83b66b1ad12?auto=format&fit=crop&w=1200&q=80",
+## Tactical Fit & Positional Role
+- **Direct 1v1 Isolation**: Williams completed 4.2 successful take-ons per 90 in La Liga last season (top 1% across Europe).
+- **Dual-Flank Balance**: Pairing Williams on the left with Bukayo Saka on the right prevents opponents from double-teaming Saka.
+- **Transitional Threat**: Adding electric vertical pace alongside Martin Odegaard's vision into space.`,
+      coverImage: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1200&q=80",
       category: "TRANSFER_RADAR",
       leagueId: leagues["premier-league"].id,
       authorId: marco.id,
-      tacticalAnalysis: "Wirtz will operate in the inside-left pocket, combining with Phil Foden and feeding Erling Haaland with through-balls into the channels.",
-      statsBreakdown: JSON.stringify({ fee: "£115M", progressivePasses: "8.4/90", xA: "0.38/90", contract: "5 Years" }),
+      tacticalAnalysis: "Williams provides elite 1v1 separation on the left flank, allowing Gabriel Martinelli and Kai Havertz to overload central spaces.",
+      statsBreakdown: JSON.stringify({ fee: "€75M (£64M)", takeOns: "4.2/90", xA: "0.34/90", contract: "5 Years" }),
       sources: JSON.stringify([
-        { name: "David Ornstein (The Athletic)", tier: 1, speaker: "David Ornstein", quote: "Manchester City have agreed a deal in principle to sign Florian Wirtz from Bayer Leverkusen." },
-        { name: "Fabrizio Romano", tier: 1, speaker: "Fabrizio Romano", quote: "Here we go confirmed! Florian Wirtz to Manchester City, contract until June 2031." }
+        { name: "David Ornstein (The Athletic)", tier: 1, quote: "Arsenal have triggered the release clause for Nico Williams." },
+        { name: "Fabrizio Romano", tier: 1, quote: "Here we go! Nico Williams to Arsenal finalized." }
       ]),
       rumorTier: 1,
-      seoTitle: "Florian Wirtz to Manchester City: £115M Agreement & Tactical Analysis | Foot360",
-      seoDescription: "Exclusive transfer breakdown of Florian Wirtz's £115M move to Manchester City, detailing Pep Guardiola's tactical blueprint.",
-      keywords: "Florian Wirtz, Manchester City, Bayer Leverkusen, Pep Guardiola, Transfer News, Premier League, Here We Go",
+      seoTitle: "Nico Williams to Arsenal: €75M Transfer Breakdown & Tactical Blueprint | Foot360",
+      seoDescription: "In-depth analysis of Nico Williams' €75M transfer to Arsenal and his tactical fit under Mikel Arteta.",
+      keywords: "Nico Williams, Arsenal, Mikel Arteta, Transfer News, Premier League, Athletic Bilbao",
       schemaJson: "{}",
       isCompliant: true,
       complianceScore: 99,
       featured: true,
-      views: 2890,
+      views: 4580,
+      publishedAt: new Date(now.getTime() - 1000 * 60 * 48), // 48 minutes ago
     },
   });
 
-  console.log("✅ Seed articles created");
+  await prisma.post.create({
+    data: {
+      title: "Bayern Munich 3-1 Bayer Leverkusen: Kompany's Intense 8.1 PPDA Press Breaks Alonso's Geometry",
+      slug: "bayern-munich-3-1-bayer-leverkusen-tactical-report-kompany",
+      excerpt: "Vincent Kompany's Bayern Munich executed an unrelenting high press to defeat Xabi Alonso's Bayer Leverkusen 3-1 in a thrilling Bundesliga summit clash.",
+      content: `At the Allianz Arena, Vincent Kompany's Bayern Munich delivered their most comprehensive tactical display of the campaign, overwhelming Xabi Alonso's Bayer Leverkusen 3-1 through an aggressive 8.1 PPDA counter-press.
+
+## Tactical Breakdown
+1. **Denying Alonso's Build-Up**: Harry Kane and Jamal Musiala formed a compact 2-man pressing block that screened Granit Xhaka, cutting off Leverkusen's primary distributor.
+2. **Wing Overload**: Michael Olise and Alphonso Davies pinned Leverkusen's wing-backs deep into their own defensive third.
+3. **Rest-Defense Stability**: Dayot Upamecano and Min-jae Kim stepped 40 meters high to recover second balls instantly.`,
+      coverImage: "https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?auto=format&fit=crop&w=1200&q=80",
+      category: "MATCH_REPORT",
+      leagueId: leagues["bundesliga"].id,
+      authorId: julian.id,
+      tacticalAnalysis: "Bayern screened Xhaka with a mid-block pivot trap, forcing Leverkusen to play long into Upamecano's aerial dominance.",
+      statsBreakdown: JSON.stringify({ xG: "2.31 - 1.05", possession: "56% - 44%", shots: "16 - 8", ppda: "8.1 - 12.4" }),
+      sources: JSON.stringify([
+        { name: "Kicker Sportmagazin", tier: 1 },
+        { name: "Bundesliga Official Telemetry", tier: 1 }
+      ]),
+      rumorTier: null,
+      seoTitle: "Bayern Munich 3-1 Bayer Leverkusen: Tactical Masterclass & xG | Foot360",
+      seoDescription: "Tactical breakdown of Bayern Munich's 3-1 win over Bayer Leverkusen at the Allianz Arena.",
+      keywords: "Bayern Munich, Bayer Leverkusen, Vincent Kompany, Xabi Alonso, Bundesliga, Tactical Analysis",
+      schemaJson: "{}",
+      isCompliant: true,
+      complianceScore: 98,
+      featured: false,
+      views: 1890,
+      publishedAt: new Date(now.getTime() - 1000 * 60 * 75), // 1 hour 15m ago
+    },
+  });
+
+  console.log("✅ Seed articles created with real-time timestamps (22 mins ago, 48 mins ago, 1h ago)!");
   console.log("🎉 Database seeding completed successfully!");
 }
 
